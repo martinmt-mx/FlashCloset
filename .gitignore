@@ -1,0 +1,45 @@
+# Secrets — never commit
+.env
+*.env
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Generated pipeline output
+backend/output/
+*.local
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.idea/
+
+# Personal reference photos — never committed
+assets/private/
+
+# Local data and session files — contain user accounts, uploads and tokens
+*.db
+*.db.bak
+*.db-journal
+.token
+.last_item
+media/
+
+# Pipeline / research scratch output (large, regenerable)
+output/
+research/*.jpg
+research/*.jpeg
+research/*.png
+
+# Tooling
+.claude/

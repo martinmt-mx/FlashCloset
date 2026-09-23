@@ -1,0 +1,242 @@
+/* Layout. Wide screens get the flanked arcade composition of the era;
+   narrow screens stack it, because two rails do not fit on a phone. */
+
+* { box-sizing: border-box; }
+
+html, body, #root { height: 100%; margin: 0; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--paper);
+  background:
+    radial-gradient(120% 80% at 50% 0%, var(--bg-glow) 0%, var(--bg-mid) 38%, var(--bg-deep) 100%);
+  overflow: hidden;
+}
+
+/* The floor strip that grounded these scenes */
+body::after {
+  content: "";
+  position: fixed;
+  inset: auto 0 0 0;
+  height: 22vh;
+  background: linear-gradient(180deg, rgba(123, 53, 184, 0) 0%, var(--floor) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 30px);
+  margin: 0;
+  color: #fff;
+  letter-spacing: 0.04em;
+  text-shadow: 0 3px 0 var(--pink-3), 0 6px 14px rgba(20, 4, 40, 0.6);
+}
+
+.room {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px clamp(10px, 2vw, 26px) 10px;
+}
+
+.room__bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.room__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.room__main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: clamp(8px, 2vw, 28px);
+}
+
+.rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.4vh, 16px);
+}
+
+.rail__empty { font-size: 13px; opacity: 0.8; }
+
+.orb { --orb-size: clamp(46px, 6.4vh, 64px); }
+.orb__thumb { width: 74%; height: 74%; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.35)); }
+.orb__status { font-weight: 800; color: #fff; font-size: 20px; }
+.orb__count {
+  position: absolute;
+  right: -2px; top: -2px;
+  min-width: 20px; height: 20px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  background: var(--gold-2);
+  border: 2px solid #fff;
+  color: var(--ink);
+  font-size: 11px; font-weight: 800;
+}
+
+.room__stage {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.stage {
+  position: relative;
+  height: min(100%, 74vh);
+  aspect-ratio: 1792 / 2400;
+  touch-action: none;
+}
+
+.stage--adjusting { cursor: grab; outline: 3px dashed rgba(255, 233, 168, 0.75); outline-offset: 6px; border-radius: 14px; }
+.stage--adjusting:active { cursor: grabbing; }
+
+.stage__avatar, .stage__layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+.stage__layer { transform-origin: center center; transition: transform 0.14s ease; }
+
+.room__stagebar { display: flex; gap: 10px; }
+
+.room__foot { text-align: center; font-size: 13px; opacity: 0.85; text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+
+/* Adjust sheet */
+.scrim {
+  position: fixed; inset: 0;
+  display: grid; place-items: end center;
+  opacity: 0; visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear 0.2s;
+  z-index: 20;
+  pointer-events: none;
+}
+.scrim--open { opacity: 1; visibility: visible; transition-delay: 0s; }
+/* Only the open sheet takes taps; otherwise it silently covers the rails. */
+.sheet { pointer-events: none; }
+.scrim--open .sheet { pointer-events: auto; }
+
+.sheet {
+  width: min(460px, 96vw);
+  padding: 14px 20px 20px;
+  border-radius: var(--radius-panel) var(--radius-panel) 0 0;
+  margin-bottom: 0;
+}
+.sheet__grab { width: 46px; height: 5px; border-radius: 999px; background: var(--pink-2); margin: 0 auto 10px; }
+.sheet h2 { font-family: var(--font-display); margin: 0 0 2px; font-size: 19px; }
+.sheet__hint { margin: 0 0 12px; font-size: 13px; opacity: 0.75; }
+.sheet__label { display: block; margin: 12px 0 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; }
+.sheet input[type="range"] { width: 100%; accent-color: var(--pink-2); }
+.sheet__actions { display: flex; gap: 10px; margin-top: 18px; }
+.sheet__actions .pill { flex: 1; }
+
+/* Character and catalog pickers */
+.chooser {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 6px 2px 10px;
+}
+.chooser__item {
+  flex: 0 0 auto;
+  width: 92px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 6px;
+  border: 3px solid transparent;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--ink);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chooser__item img { width: 100%; height: 72px; object-fit: contain; }
+.chooser__item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.chooser__item--on { border-color: var(--gold-2); background: #fff; }
+.chooser__item:disabled { opacity: 0.5; cursor: wait; }
+
+/* Saved looks */
+.looks { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; max-height: 34vh; overflow-y: auto; }
+.looks__row { display: flex; gap: 8px; align-items: stretch; }
+.looks__wear {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 16px;
+  border: 3px solid var(--pink-2);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+.looks__wear:hover { background: var(--pink-1); }
+.looks__name { font-weight: 700; }
+.looks__count { font-size: 12px; opacity: 0.7; }
+.looks__delete {
+  width: 44px;
+  border: 3px solid var(--line, var(--pink-3));
+  border-radius: 999px;
+  background: var(--pink-3);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* Login */
+.login { height: 100%; display: grid; place-items: center; position: relative; z-index: 1; gap: 18px; align-content: center; }
+.login__card { width: min(380px, 92vw); padding: 22px; display: flex; flex-direction: column; }
+.login__card input {
+  width: 100%; padding: 11px 14px; font: inherit; color: var(--ink);
+  border: 3px solid var(--pink-2); border-radius: 999px; background: #fff;
+}
+.login__card .pill { margin-top: 20px; }
+.login__switch { margin-top: 10px; background: none; border: 0; color: var(--pink-3); font: inherit; text-decoration: underline; cursor: pointer; }
+.login__error { color: #b1004a; font-size: 13px; margin: 12px 0 0; }
+
+.loading { height: 100%; display: grid; place-items: center; font-family: var(--font-display); font-size: 20px; }
+
+.toast {
+  position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 12px);
+  background: var(--gold-2); color: var(--ink); font-weight: 800; font-size: 14px;
+  padding: 10px 20px; border-radius: 999px; border: 3px solid #fff;
+  box-shadow: var(--lift-md);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease;
+  z-index: 30;
+}
+.toast--on { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 760px) {
+  .room__main {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    align-items: stretch;
+  }
+  .rail { flex-direction: row; justify-content: center; flex-wrap: wrap; }
+  .rail--right .chevron { transform: rotate(-90deg); }
+  /* Drive the size from the height: with height:auto the aspect-ratio box has
+     nothing to resolve against inside a grid row and collapses to zero. */
+  .stage { height: 48vh; width: auto; max-width: 100%; margin: 0 auto; }
+  .room__stage { justify-content: flex-start; gap: 14px; }
+  .brand { font-size: 20px; }
+}

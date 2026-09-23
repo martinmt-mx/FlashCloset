@@ -1,0 +1,126 @@
+/* The 2010s flash dress-up look, as tokens.
+   Everything visual derives from here: saturated pink/cyan, glossy circular
+   controls with a white rim, chunky drop shadows, rounded panels. */
+
+:root {
+  /* Stage */
+  --bg-deep: #2b1150;
+  --bg-mid: #5a2196;
+  --bg-glow: #a24ddb;
+  --floor: #7b35b8;
+
+  /* Signature pair: pink for the character's own things, cyan for the wardrobe */
+  --pink-1: #ff9ed2;
+  --pink-2: #f0509f;
+  --pink-3: #c2166e;
+  --cyan-1: #a8f0ff;
+  --cyan-2: #3fc7ea;
+  --cyan-3: #1481b5;
+
+  --gold-1: #ffe9a8;
+  --gold-2: #f5c033;
+
+  --ink: #4a1140;
+  --paper: #fff6fb;
+  --rim: #ffffff;
+
+  /* Depth: flash-era UI leaned on hard offsets, not soft modern blur */
+  --lift-sm: 0 3px 0 rgba(74, 17, 64, 0.35);
+  --lift-md: 0 5px 0 rgba(74, 17, 64, 0.4), 0 10px 22px rgba(20, 4, 40, 0.45);
+  --lift-lg: 0 8px 0 rgba(74, 17, 64, 0.45), 0 18px 40px rgba(20, 4, 40, 0.5);
+
+  --ring: 4px;
+  --radius-panel: 26px;
+
+  --font-display: "Baloo 2", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-body: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+}
+
+/* A glossy circular control. The ::after crescent is the highlight that makes
+   these read as the era's plastic buttons rather than flat modern circles. */
+.orb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--orb-size, 58px);
+  height: var(--orb-size, 58px);
+  padding: 0;
+  border: var(--ring) solid var(--rim);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 24%, var(--orb-1), var(--orb-2) 62%, var(--orb-3));
+  box-shadow: var(--lift-md);
+  cursor: pointer;
+  transition: transform 0.12s ease, filter 0.12s ease;
+  flex: 0 0 auto;
+  /* No overflow clipping: the count badge sits outside the circle on purpose.
+     The gloss below is inset within the disc, so it needs no clipping either. */
+}
+
+.orb::after {
+  content: "";
+  position: absolute;
+  inset: 8% 14% 52% 14%;
+  border-radius: 50%;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0));
+  pointer-events: none;
+}
+
+.orb:hover:not(:disabled) { transform: translateY(-2px) scale(1.04); }
+.orb:active:not(:disabled) { transform: translateY(2px) scale(0.98); }
+.orb:disabled { filter: grayscale(0.7) brightness(0.8); cursor: not-allowed; }
+
+.orb--pink { --orb-1: var(--pink-1); --orb-2: var(--pink-2); --orb-3: var(--pink-3); }
+.orb--cyan { --orb-1: var(--cyan-1); --orb-2: var(--cyan-2); --orb-3: var(--cyan-3); }
+.orb--gold { --orb-1: #fff7d6; --orb-2: var(--gold-2); --orb-3: #b8801a; }
+
+.orb--on {
+  border-color: var(--gold-2);
+  box-shadow: var(--lift-md), 0 0 0 3px rgba(245, 192, 51, 0.5);
+}
+
+/* Paging chevrons: a CSS triangle, same plastic treatment */
+.chevron {
+  width: 0;
+  height: 0;
+  border-left: 26px solid transparent;
+  border-right: 26px solid transparent;
+  background: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+  filter: drop-shadow(0 3px 0 rgba(74, 17, 64, 0.4));
+  transition: transform 0.12s ease;
+}
+.chevron:hover:not(:disabled) { transform: scale(1.12); }
+.chevron:disabled { opacity: 0.3; cursor: not-allowed; }
+.chevron--up { border-bottom: 22px solid var(--tip, var(--pink-2)); }
+.chevron--down { border-top: 22px solid var(--tip, var(--cyan-2)); }
+
+/* A rounded panel with the era's thick white rim */
+.panel {
+  background: linear-gradient(180deg, rgba(255, 246, 251, 0.96), rgba(255, 224, 242, 0.92));
+  border: var(--ring) solid var(--rim);
+  border-radius: var(--radius-panel);
+  box-shadow: var(--lift-lg);
+  color: var(--ink);
+}
+
+.pill {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(74, 17, 64, 0.45);
+  border: 3px solid var(--rim);
+  border-radius: 999px;
+  padding: 10px 22px;
+  cursor: pointer;
+  background: linear-gradient(180deg, var(--pill-1, var(--pink-1)), var(--pill-2, var(--pink-3)));
+  box-shadow: var(--lift-md);
+  transition: transform 0.12s ease;
+}
+.pill:hover:not(:disabled) { transform: translateY(-2px); }
+.pill:active:not(:disabled) { transform: translateY(2px); }
+.pill:disabled { filter: grayscale(0.6); cursor: not-allowed; }
+.pill--cyan { --pill-1: var(--cyan-1); --pill-2: var(--cyan-3); }
+.pill--gold { --pill-1: var(--gold-1); --pill-2: #c08a12; color: var(--ink); text-shadow: none; }

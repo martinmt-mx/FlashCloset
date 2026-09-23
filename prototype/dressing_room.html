@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FlashCloset — Vestidor</title>
+<style>
+  :root {
+    --bg: #17141f;
+    --bg-2: #211d2d;
+    --panel: #272235;
+    --line: #38324a;
+    --text: #efebf8;
+    --muted: #a49eb9;
+    --accent: #d874e8;
+    --accent-ink: #2a0f30;
+    --ok: #57d69b;
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: radial-gradient(120% 90% at 50% 0%, #2a2340 0%, var(--bg) 58%);
+    color: var(--text);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 20px 16px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  header { display: flex; align-items: baseline; justify-content: space-between; }
+  h1 { font-size: 19px; margin: 0; font-weight: 680; letter-spacing: -.01em; }
+  .tag { color: var(--muted); font-size: 12.5px; }
+
+  /* ---------- avatar stage ---------- */
+  .stage {
+    position: relative;
+    aspect-ratio: 960 / 1460;
+    background: linear-gradient(180deg, #ded9e6 0%, #cfc8db 100%);
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+  .stage img { position: absolute; inset: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+  .stage .layer { transform-origin: center center; transition: transform .18s ease, opacity .18s ease; }
+  .stage .layer.hidden { opacity: 0; }
+
+  .empty-note {
+    position: absolute; left: 0; right: 0; bottom: 14px;
+    text-align: center; color: #6c6480; font-size: 12.5px;
+  }
+
+  /* ---------- garment carousel ---------- */
+  .rail-head { display: flex; align-items: center; justify-content: space-between; }
+  .rail-head span { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+  .rail {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 2px 10px;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+  }
+  .rail::-webkit-scrollbar { height: 6px; }
+  .rail::-webkit-scrollbar-thumb { background: var(--line); border-radius: 99px; }
+  .chip {
+    flex: 0 0 auto;
+    width: 84px; height: 84px;
+    border-radius: 14px;
+    border: 2px solid transparent;
+    background: var(--bg-2);
+    padding: 0;
+    cursor: pointer;
+    scroll-snap-align: center;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .15s ease, transform .15s ease;
+  }
+  .chip:hover { transform: translateY(-2px); }
+  .chip img { width: 100%; height: 100%; object-fit: contain; }
+  .chip.active { border-color: var(--accent); }
+  .chip .dot {
+    position: absolute; top: 6px; right: 6px;
+    width: 8px; height: 8px; border-radius: 99px; background: var(--ok);
+    opacity: 0;
+  }
+  .chip.tuned .dot { opacity: 1; }
+  .chip.none { display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+
+  /* ---------- actions ---------- */
+  .actions { display: flex; gap: 10px; }
+  button {
+    font: inherit;
+    border-radius: 12px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--text);
+    padding: 11px 16px;
+    cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  button:hover:not(:disabled) { border-color: var(--accent); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 640; }
+  .actions button { flex: 1; }
+
+  /* ---------- adjust sheet ---------- */
+  /* The scrim never takes pointer events: the stage behind it stays draggable
+     while the sheet is open, which is the whole point of adjust mode. */
+  .scrim {
+    position: fixed; inset: 0;
+    display: grid; place-items: end center;
+    opacity: 0; pointer-events: none;
+    visibility: hidden;
+    transition: opacity .2s ease, visibility 0s linear .2s;
+    z-index: 10;
+  }
+  .scrim.open { opacity: 1; visibility: visible; transition-delay: 0s; }
+  /* Only the open sheet takes clicks. Otherwise it sits invisible over the
+     garment rail and silently swallows every tap. */
+  .sheet { pointer-events: none; }
+  .scrim.open .sheet { pointer-events: auto; }
+  .sheet {
+    box-shadow: 0 -18px 50px rgba(8, 6, 14, .6);
+    width: 100%; max-width: 440px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 20px 20px 0 0;
+    padding: 18px 18px 22px;
+    transform: translateY(14px);
+    transition: transform .2s ease;
+  }
+  .scrim.open .sheet { transform: translateY(0); }
+  .sheet h2 { margin: 0 0 2px; font-size: 16px; }
+  .sheet p.hint { margin: 0 0 14px; color: var(--muted); font-size: 12.5px; }
+  .grab { width: 38px; height: 4px; border-radius: 99px; background: var(--line); margin: 0 auto 14px; }
+
+  label { display: block; margin: 12px 0 5px; font-size: 11.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .readout { font-variant-numeric: tabular-nums; color: var(--muted); font-size: 12px; margin-top: 8px; }
+
+  .stage.adjusting { cursor: grab; }
+  .stage.adjusting.dragging { cursor: grabbing; }
+  .stage.adjusting::after {
+    content: "";
+    position: absolute; inset: 0;
+    border: 2px dashed rgba(216, 116, 232, .55);
+    border-radius: var(--radius);
+    pointer-events: none;
+  }
+  .toast {
+    position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(10px);
+    background: var(--ok); color: #05281a; font-weight: 600; font-size: 13px;
+    padding: 9px 16px; border-radius: 99px;
+    opacity: 0; pointer-events: none; transition: opacity .2s ease, transform .2s ease;
+    z-index: 20;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Vestidor</h1>
+    <span class="tag" id="tag">Elegí una prenda</span>
+  </header>
+
+  <div class="stage" id="stage">
+    <img id="avatar" src="proto_avatar.png" alt="Avatar">
+    <img id="layer" class="layer hidden" alt="">
+  </div>
+
+  <div class="rail-head">
+    <span>Tus prendas</span>
+    <span id="tunedCount"></span>
+  </div>
+  <div class="rail" id="rail"></div>
+
+  <div class="actions">
+    <button id="adjustBtn" disabled>Ajustar</button>
+    <button id="clearBtn" disabled>Quitar</button>
+  </div>
+</div>
+
+<div class="scrim" id="scrim">
+  <div class="sheet">
+    <div class="grab"></div>
+    <h2>Ajustar calce</h2>
+    <p class="hint">Arrastrá la prenda sobre el avatar. La rueda o el slider cambian el tamaño.</p>
+
+    <label>Tamaño</label>
+    <input id="scale" type="range" min="0.55" max="1.55" step="0.002" value="1">
+
+    <label>Opacidad <span style="text-transform:none">(para ver el calce)</span></label>
+    <input id="opacity" type="range" min="0.3" max="1" step="0.01" value="1">
+
+    <div class="readout" id="readout"></div>
+
+    <div class="actions" style="margin-top:16px">
+      <button id="cancelBtn">Cancelar</button>
+      <button id="saveBtn" class="primary">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Calce guardado</div>
+
+<script>
+const ITEMS = [
+  { id: 'black',    name: 'Blusa negra',    src: 'item_black.png',    thumb: 'thumb_black.png' },
+  { id: 'burgundy', name: 'Blusa vino',     src: 'item_burgundy.png', thumb: 'thumb_burgundy.png' },
+  { id: 'navy',     name: 'Blusa azul',     src: 'item_navy.png',     thumb: 'thumb_navy.png' },
+  { id: 'emerald',  name: 'Blusa esmeralda',src: 'item_emerald.png',  thumb: 'thumb_emerald.png' },
+];
+
+const DEFAULT_FIT = { offset_x: 0, offset_y: 0, scale: 1 };
+const STORE_KEY = 'flashcloset.fits.v1';
+
+// Per-garment fit, saved once and reused every time the item is worn.
+let fits = {};
+try {
+  fits = JSON.parse(localStorage.getItem(STORE_KEY) || '{}');
+} catch (_) {
+  fits = {};
+}
+
+let activeId = null;
+let adjusting = false;
+let draft = null;          // fit being edited inside the sheet
+let backup = null;         // fit to restore if the user cancels
+
+const stage = document.getElementById('stage');
+const layer = document.getElementById('layer');
+const rail = document.getElementById('rail');
+const tag = document.getElementById('tag');
+const tunedCount = document.getElementById('tunedCount');
+const adjustBtn = document.getElementById('adjustBtn');
+const clearBtn = document.getElementById('clearBtn');
+const scrim = document.getElementById('scrim');
+const scaleInput = document.getElementById('scale');
+const opacityInput = document.getElementById('opacity');
+const readout = document.getElementById('readout');
+const toast = document.getElementById('toast');
+
+function fitFor(id) {
+  return fits[id] ? { ...fits[id] } : { ...DEFAULT_FIT };
+}
+
+function persist() {
+  try {
+    localStorage.setItem(STORE_KEY, JSON.stringify(fits));
+  } catch (_) { /* private mode: the session still works, it just will not remember */ }
+}
+
+function applyFit(fit) {
+  // Offsets are fractions of the stage, so the same values hold at any render size.
+  const dx = fit.offset_x * stage.clientWidth;
+  const dy = fit.offset_y * stage.clientHeight;
+  layer.style.transform = `translate(${dx}px, ${dy}px) scale(${fit.scale})`;
+}
+
+function renderRail() {
+  rail.innerHTML = '';
+
+  ITEMS.forEach(item => {
+    const chip = document.createElement('button');
+    chip.className = 'chip';
+    chip.classList.toggle('active', item.id === activeId);
+    chip.classList.toggle('tuned', Boolean(fits[item.id]));
+    chip.title = item.name;
+    chip.innerHTML = `<img src="${item.thumb}" alt="${item.name}"><span class="dot"></span>`;
+    chip.addEventListener('click', () => wear(item.id));
+    rail.appendChild(chip);
+  });
+
+  const n = Object.keys(fits).length;
+  tunedCount.textContent = n ? `${n} ajustada${n > 1 ? 's' : ''}` : '';
+}
+
+function wear(id) {
+  if (adjusting) return;
+  activeId = id;
+  const item = ITEMS.find(i => i.id === id);
+  layer.src = item.src;
+  layer.classList.remove('hidden');
+  applyFit(fitFor(id));
+  tag.textContent = item.name;
+  adjustBtn.disabled = false;
+  clearBtn.disabled = false;
+  renderRail();
+}
+
+function clearLook() {
+  activeId = null;
+  layer.classList.add('hidden');
+  tag.textContent = 'Elegí una prenda';
+  adjustBtn.disabled = true;
+  clearBtn.disabled = true;
+  renderRail();
+}
+
+/* ---------- adjust mode ---------- */
+
+function openAdjust() {
+  if (!activeId) return;
+  adjusting = true;
+  backup = fitFor(activeId);
+  draft = fitFor(activeId);
+  scaleInput.value = draft.scale;
+  opacityInput.value = 1;
+  layer.style.opacity = 1;
+  layer.style.transition = 'none';
+  stage.classList.add('adjusting');
+  scrim.classList.add('open');
+  updateReadout();
+}
+
+function closeAdjust(save) {
+  if (!adjusting) return;
+  adjusting = false;
+  stage.classList.remove('adjusting', 'dragging');
+  scrim.classList.remove('open');
+  layer.style.transition = '';
+  layer.style.opacity = 1;
+
+  if (save) {
+    fits[activeId] = draft;
+    persist();
+    showToast();
+  } else {
+    applyFit(backup);
+  }
+  renderRail();
+}
+
+function updateReadout() {
+  readout.textContent =
+    `offset_x ${draft.offset_x.toFixed(4)}   offset_y ${draft.offset_y.toFixed(4)}   scale ${draft.scale.toFixed(3)}`;
+}
+
+function showToast() {
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 1500);
+}
+
+let dragging = false, startX = 0, startY = 0, originX = 0, originY = 0;
+
+stage.addEventListener('pointerdown', e => {
+  if (!adjusting) return;
+  dragging = true;
+  stage.classList.add('dragging');
+  stage.setPointerCapture(e.pointerId);
+  startX = e.clientX; startY = e.clientY;
+  originX = draft.offset_x; originY = draft.offset_y;
+});
+
+stage.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  draft.offset_x = originX + (e.clientX - startX) / stage.clientWidth;
+  draft.offset_y = originY + (e.clientY - startY) / stage.clientHeight;
+  applyFit(draft);
+  updateReadout();
+});
+
+function endDrag(e) {
+  if (!dragging) return;
+  dragging = false;
+  stage.classList.remove('dragging');
+  try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+}
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+
+stage.addEventListener('wheel', e => {
+  if (!adjusting) return;
+  e.preventDefault();
+  draft.scale = Math.min(1.55, Math.max(0.55, draft.scale - e.deltaY * 0.0012));
+  scaleInput.value = draft.scale;
+  applyFit(draft);
+  updateReadout();
+}, { passive: false });
+
+scaleInput.addEventListener('input', () => {
+  if (!adjusting) return;
+  draft.scale = parseFloat(scaleInput.value);
+  applyFit(draft);
+  updateReadout();
+});
+
+opacityInput.addEventListener('input', () => {
+  layer.style.opacity = opacityInput.value;
+});
+
+window.addEventListener('keydown', e => {
+  if (!adjusting) return;
+  const stepPx = e.shiftKey ? 10 : 1;
+  const moves = {
+    ArrowLeft:  [-stepPx / stage.clientWidth, 0],
+    ArrowRight: [ stepPx / stage.clientWidth, 0],
+    ArrowUp:    [0, -stepPx / stage.clientHeight],
+    ArrowDown:  [0,  stepPx / stage.clientHeight],
+  };
+  if (e.key === 'Escape') { closeAdjust(false); return; }
+  if (!moves[e.key]) return;
+  e.preventDefault();
+  draft.offset_x += moves[e.key][0];
+  draft.offset_y += moves[e.key][1];
+  applyFit(draft);
+  updateReadout();
+});
+
+adjustBtn.addEventListener('click', openAdjust);
+clearBtn.addEventListener('click', clearLook);
+document.getElementById('saveBtn').addEventListener('click', () => closeAdjust(true));
+document.getElementById('cancelBtn').addEventListener('click', () => closeAdjust(false));
+
+window.addEventListener('resize', () => {
+  if (activeId) applyFit(adjusting ? draft : fitFor(activeId));
+});
+
+renderRail();
+</script>
+</body>
+</html>

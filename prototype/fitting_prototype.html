@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ajuste de prenda</title>
+<style>
+  :root {
+    --bg: #14131a;
+    --panel: #1d1c26;
+    --line: #2f2d3d;
+    --text: #e9e7f2;
+    --muted: #9b97b0;
+    --accent: #c86ddb;
+    --ok: #4ec98f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    display: flex;
+    min-height: 100vh;
+    gap: 24px;
+    padding: 24px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+  #stage {
+    position: relative;
+    width: 480px;
+    height: 730px;
+    background:
+      repeating-conic-gradient(#26242f 0% 25%, #201e29 0% 50%) 0 0 / 32px 32px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    overflow: hidden;
+    flex: 0 0 auto;
+    touch-action: none;
+    cursor: grab;
+  }
+  #stage.dragging { cursor: grabbing; }
+  #stage img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
+  #garment { transform-origin: center center; will-change: transform; }
+
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    width: 340px;
+    flex: 1 1 300px;
+    max-width: 420px;
+  }
+  h1 { font-size: 17px; margin: 0 0 4px; font-weight: 650; }
+  .sub { color: var(--muted); margin: 0 0 20px; font-size: 13px; }
+  label { display: block; margin: 16px 0 6px; font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+  input[type=range] { width: 100%; accent-color: var(--accent); }
+  .row { display: flex; justify-content: space-between; align-items: baseline; }
+  .val { font-variant-numeric: tabular-nums; color: var(--text); font-size: 13px; }
+  pre {
+    background: #131219;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    font-size: 12.5px;
+    color: #cdd7f5;
+    overflow-x: auto;
+    margin: 8px 0 0;
+  }
+  .btns { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+  button {
+    font: inherit;
+    padding: 9px 15px;
+    border-radius: 9px;
+    border: 1px solid var(--line);
+    background: #262433;
+    color: var(--text);
+    cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #1a0f1e; font-weight: 600; }
+  .hint { color: var(--muted); font-size: 12.5px; margin-top: 16px; }
+  kbd { background: #2c2a38; border: 1px solid var(--line); border-radius: 5px; padding: 1px 6px; font-size: 11.5px; }
+</style>
+</head>
+<body>
+
+<div id="stage">
+  <img id="avatar" src="proto_avatar.png" alt="Avatar base">
+  <img id="garment" src="proto_garment.png" alt="Capa de la prenda">
+</div>
+
+<div class="panel">
+  <h1>Ajuste de prenda</h1>
+  <p class="sub">Arrastrá la prenda sobre el avatar. Rueda del mouse o el slider para escalar.</p>
+
+  <label>Escala</label>
+  <div class="row"><input id="scale" type="range" min="0.5" max="1.6" step="0.002" value="1"></div>
+  <div class="row"><span class="val" id="scaleVal">1.000</span></div>
+
+  <label>Opacidad de la prenda <span style="text-transform:none">(para ver el calce)</span></label>
+  <input id="opacity" type="range" min="0.25" max="1" step="0.01" value="1">
+
+  <label>Transformación guardada (normalizada)</label>
+  <pre id="out"></pre>
+
+  <div class="btns">
+    <button id="reset">Reiniciar</button>
+    <button id="nudge">Centrar en torso</button>
+    <button class="primary" id="save">Se ve bien</button>
+  </div>
+
+  <p class="hint">
+    Las flechas <kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> mueven de a 1&nbsp;px.
+    Los valores son fracciones del lienzo, no píxeles, así se ven igual en cualquier pantalla.
+  </p>
+</div>
+
+<script>
+const stage = document.getElementById('stage');
+const garment = document.getElementById('garment');
+const scaleInput = document.getElementById('scale');
+const scaleVal = document.getElementById('scaleVal');
+const opacityInput = document.getElementById('opacity');
+const out = document.getElementById('out');
+
+const state = { dx: 0, dy: 0, scale: 1 };
+
+function render() {
+  garment.style.transform =
+    `translate(${state.dx}px, ${state.dy}px) scale(${state.scale})`;
+  scaleInput.value = state.scale;
+  scaleVal.textContent = state.scale.toFixed(3);
+
+  // Normalized against the stage box, so the same numbers work at any render size.
+  out.textContent = JSON.stringify({
+    offset_x: +(state.dx / stage.clientWidth).toFixed(5),
+    offset_y: +(state.dy / stage.clientHeight).toFixed(5),
+    scale: +state.scale.toFixed(4)
+  }, null, 2);
+}
+
+let dragging = false, startX = 0, startY = 0, originX = 0, originY = 0;
+
+stage.addEventListener('pointerdown', e => {
+  dragging = true;
+  stage.classList.add('dragging');
+  stage.setPointerCapture(e.pointerId);
+  startX = e.clientX; startY = e.clientY;
+  originX = state.dx; originY = state.dy;
+});
+
+stage.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const k = stage.clientWidth / stage.offsetWidth;
+  state.dx = originX + (e.clientX - startX) * k;
+  state.dy = originY + (e.clientY - startY) * k;
+  render();
+});
+
+function endDrag(e) {
+  if (!dragging) return;
+  dragging = false;
+  stage.classList.remove('dragging');
+  try { stage.releasePointerCapture(e.pointerId); } catch (_) {}
+}
+stage.addEventListener('pointerup', endDrag);
+stage.addEventListener('pointercancel', endDrag);
+
+stage.addEventListener('wheel', e => {
+  e.preventDefault();
+  state.scale = Math.min(1.6, Math.max(0.5, state.scale - e.deltaY * 0.0012));
+  render();
+}, { passive: false });
+
+scaleInput.addEventListener('input', () => {
+  state.scale = parseFloat(scaleInput.value);
+  render();
+});
+
+opacityInput.addEventListener('input', () => {
+  garment.style.opacity = opacityInput.value;
+});
+
+window.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 10 : 1;
+  const moves = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+  if (!moves[e.key]) return;
+  e.preventDefault();
+  state.dx += moves[e.key][0];
+  state.dy += moves[e.key][1];
+  render();
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  state.dx = 0; state.dy = 0; state.scale = 1;
+  render();
+});
+
+document.getElementById('nudge').addEventListener('click', () => {
+  // Rough auto-fit: what a backend anchor-alignment step would hand the user as a start.
+  state.dx = 0; state.dy = -6; state.scale = 0.97;
+  render();
+});
+
+document.getElementById('save').addEventListener('click', () => {
+  const btn = document.getElementById('save');
+  btn.textContent = 'Guardado ✓';
+  btn.style.background = 'var(--ok)';
+  btn.style.borderColor = 'var(--ok)';
+  setTimeout(() => {
+    btn.textContent = 'Se ve bien';
+    btn.style.background = '';
+    btn.style.borderColor = '';
+  }, 1400);
+});
+
+render();
+</script>
+</body>
+</html>
