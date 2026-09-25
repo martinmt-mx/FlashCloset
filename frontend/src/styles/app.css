@@ -107,6 +107,12 @@ body::after {
   object-fit: contain;
   user-select: none;
   -webkit-user-drag: none;
+  /* A garment scaled up past 1 overflows the stage, and the overflowing part is
+     transparent but still swallows clicks — a coat sized to 1.15 covered the
+     buttons under the stage. These images are decoration; dragging is handled by
+     #avatar-stage itself, which still receives the events. Clipping the stage
+     instead would cut off the very garments that need the extra room. */
+  pointer-events: none;
 }
 .stage__layer { transform-origin: center center; transition: transform 0.14s ease; }
 
