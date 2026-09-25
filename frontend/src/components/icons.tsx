@@ -1,5 +1,9 @@
 /** Category glyphs, drawn as flat white silhouettes to sit inside the orbs. */
 
+// React 19 no longer publishes a global JSX namespace, so the element type is
+// imported rather than assumed.
+import type { ReactElement } from "react";
+
 import type { Category } from "../api";
 
 const props = { viewBox: "0 0 24 24", fill: "#fff", width: "56%", height: "56%" };
@@ -41,7 +45,7 @@ const FullBody = () => (
   </svg>
 );
 
-export const CATEGORY_ICON: Record<Category, () => JSX.Element> = {
+export const CATEGORY_ICON: Record<Category, () => ReactElement> = {
   top: Top,
   bottom: Bottom,
   shoes: Shoes,

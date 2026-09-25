@@ -17,6 +17,10 @@ export interface ClothingItem {
   offset_x: number;
   offset_y: number;
   scale: number;
+  // The backend has always sent these two; the interface had simply never caught up,
+  // which the type check would have said if the build had ever run it.
+  is_shared: boolean;
+  source_item_id: string | null;
   created_at: string;
 }
 
@@ -65,8 +69,13 @@ export const setToken = (token: string) => localStorage.setItem(TOKEN_KEY, token
 export const clearToken = () => localStorage.removeItem(TOKEN_KEY);
 
 class ApiError extends Error {
-  constructor(public status: number, message: string) {
+  // Declared rather than a constructor parameter property: the latter emits code, so
+  // it is rejected under erasableSyntaxOnly, which this project builds with.
+  readonly status: number;
+
+  constructor(status: number, message: string) {
     super(message);
+    this.status = status;
   }
 }
 
