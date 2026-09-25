@@ -13,7 +13,7 @@ from app.config import get_settings
 from app.jobs import process_item
 from app.models import DEFAULT_Z_INDEX, Category, ClothingItem, ProcessingStatus
 from app.schemas import ClothingItemOut, CopyRequest, Fit, ShareFlag
-from app.services.storage import LocalStorage
+from app.services.storage import build_storage
 
 router = APIRouter(prefix="/clothing-items", tags=["closet"])
 
@@ -38,7 +38,7 @@ async def upload_item(
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "The photo is empty")
 
     avatar_for_item = avatar_id or (await ensure_default_avatar(session, user)).id
-    storage = LocalStorage(get_settings().media_dir)
+    storage = build_storage(get_settings())
     suffix = "." + (photo.filename or "photo.jpg").rsplit(".", 1)[-1].lower()
 
     item = ClothingItem(

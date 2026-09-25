@@ -20,7 +20,7 @@ from app.models import ClothingItem, ProcessingStatus
 from app.services.dressers import build_dresser
 from app.services.image_generation import Category as GenCategory
 from app.services.pipeline import GarmentPipeline
-from app.services.storage import LocalStorage
+from app.services.storage import build_storage
 
 
 async def process_item(item_id: uuid.UUID, photo: bytes, filename: str) -> None:
@@ -45,7 +45,7 @@ async def process_item(item_id: uuid.UUID, photo: bytes, filename: str) -> None:
             await session.commit()
             return
 
-        storage = LocalStorage(settings.media_dir)
+        storage = build_storage(settings)
         item.layer_image_url = storage.save(_png(asset.layer), ".png", folder="layers")
         item.preview_image_url = storage.save(_jpeg(asset.preview), ".jpg", folder="previews")
         item.thumbnail_image_url = storage.save(

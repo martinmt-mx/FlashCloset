@@ -1,12 +1,21 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api, setToken } from "../api";
 
 export function Login({ onDone }: { onDone: () => void }) {
-  const [email, setEmail] = useState("martin@flashcloset.app");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "register">("login");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // Assume closed until the server says otherwise, so a slow or failed check
+  // never flashes a sign-up link on an instance that would refuse it.
+  const [canRegister, setCanRegister] = useState(false);
+
+  useEffect(() => {
+    api.health()
+      .then((info) => setCanRegister(info.registration))
+      .catch(() => setCanRegister(false));
+  }, []);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -43,12 +52,14 @@ export function Login({ onDone }: { onDone: () => void }) {
         <button className="pill" disabled={busy}>
           {busy ? "…" : mode === "login" ? "Entrar" : "Crear cuenta"}
         </button>
-        <button
-          type="button" className="login__switch"
-          onClick={() => setMode(mode === "login" ? "register" : "login")}
-        >
-          {mode === "login" ? "Crear una cuenta" : "Ya tengo cuenta"}
-        </button>
+        {canRegister && (
+          <button
+            type="button" className="login__switch"
+            onClick={() => setMode(mode === "login" ? "register" : "login")}
+          >
+            {mode === "login" ? "Crear una cuenta" : "Ya tengo cuenta"}
+          </button>
+        )}
       </form>
     </div>
   );

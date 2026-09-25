@@ -26,7 +26,7 @@ from app.api.routes.avatars import transparent_avatar  # noqa: E402
 from app.models import DEFAULT_Z_INDEX, Avatar, Category, ClothingItem, ProcessingStatus, User  # noqa: E402
 from app.security import hash_password  # noqa: E402
 from app.services.pipeline import profile_of  # noqa: E402
-from app.services.storage import LocalStorage  # noqa: E402
+from app.services.storage import build_storage  # noqa: E402
 
 SEEDS = [
     ("camisole_v3", "camisola de lunares", Category.TOP),
@@ -38,7 +38,7 @@ SEEDS = [
 
 async def main(email: str) -> None:
     settings = get_settings()
-    storage = LocalStorage(settings.media_dir)
+    storage = build_storage(settings)
 
     async with engine.begin() as connection:
         await connection.run_sync(Base.metadata.create_all)

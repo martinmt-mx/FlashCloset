@@ -1,0 +1,34 @@
+# Render blueprint. Everything secret is marked sync:false, which means Render asks
+# for it in the dashboard instead of reading it from this file — none of these values
+# belong in a public repository.
+services:
+  - type: web
+    name: flashcloset
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      # The disk is wiped on every redeploy, so generated images must go to the bucket.
+      - key: STORAGE_BACKEND
+        value: s3
+      # The public URL is reachable by anyone who finds it; sign-up stays shut and
+      # accounts are created from the command line.
+      - key: ALLOW_REGISTRATION
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ENDPOINT_URL
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_PUBLIC_BASE_URL
+        sync: false

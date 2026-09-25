@@ -38,21 +38,33 @@ from app.services.garment_layer import BodyRegion, MatteStyle, extract_from_matt
 from app.services.image_generation import _COVERAGE, Category  # noqa: E402
 from app.services.image_generation import _MATTE_PROMPT, _PROMPT  # noqa: E402
 from app.services.pipeline import _REGION_FOR, profile_of  # noqa: E402
-from app.services.storage import LocalStorage  # noqa: E402
+from app.services.storage import build_storage  # noqa: E402
 
 ACCOUNTS = ["martin@flashcloset.app", "mar@flashcloset.app"]
+
+_CARPET = (
+    "In image 2 the garment is lying flat on a carpet floor. Ignore the carpet, the "
+    "floor and anything else around it; only the garment matters."
+)
+_ANGLED = (
+    _CARPET + " It is lying at an angle with its sleeves spread out flat, which is not "
+    "how it is worn: work out its real shape and draw it worn normally on her body."
+)
 
 
 class Garment:
     """One real garment: its photo, how it is described to the model, where it sits."""
 
     def __init__(self, name: str, photo: str, category: Category, label: str, described: str,
-                 region: BodyRegion | None = None):
+                 region: BodyRegion | None = None, note: str = ""):
         self.name = name
         self.photo = photo
         self.category = category
         self.label = label          # what the closet shows
         self.described = described  # what the prompts say
+        # Anything odd about the photo the model has to be told to look past: a garment
+        # shot inside out, folded, or lying at an angle gets read literally otherwise.
+        self.note = note
         # Category is a wardrobe slot; region is where on the canvas to look for the
         # garment. They usually agree, but knee-high boots are SHOES that reach far
         # above the feet, so the two have to be settable apart.
@@ -73,6 +85,49 @@ BATCH = [
     Garment("boots_black", "boots_black.png", Category.SHOES, "botas negras largas",
             "a pair of black leather knee-high pointed-toe boots with buckle straps "
             "and a kitten heel", region=BodyRegion.LEGS),
+
+    # Second batch. These were shot lying on a carpet rather than cut out on white,
+    # and a few are lying at an angle, so most carry a note.
+    Garment("skirt_pink_floral", "skirt_pink_floral.webp", Category.BOTTOM,
+            "falda rosa de flores",
+            "a hot pink chiffon skirt with a red floral print and an asymmetric "
+            "handkerchief hem", note=_CARPET),
+    Garment("jeans_baggy_dark", "jeans_baggy_dark.webp", Category.BOTTOM,
+            "jeans holgados oscuros",
+            "a pair of mid-blue baggy wide-leg jeans with a faded front wash",
+            note=_CARPET),
+    Garment("jeans_wide_mid", "jeans_wide_mid.webp", Category.BOTTOM, "jeans anchos",
+            "a pair of blue wide-leg jeans with a faded front wash", note=_CARPET),
+    Garment("jeans_wide_light", "jeans_wide_light.webp", Category.BOTTOM,
+            "jeans claros anchos",
+            "a pair of light blue wide-leg jeans", note=_CARPET),
+    Garment("skirt_cargo_khaki", "skirt_cargo_khaki.webp", Category.BOTTOM,
+            "minifalda cargo beige",
+            "a khaki cargo mini skirt with side pockets and a raw frayed hem",
+            note=_CARPET),
+    Garment("cami_blue_lace", "cami_blue_lace.webp", Category.TOP, "blusa azul de encaje",
+            "a dusty blue spaghetti-strap camisole with a v-neck and dark lace applique "
+            "under the bust", note=_CARPET),
+    Garment("capri_denim", "capri_denim.webp", Category.BOTTOM, "capri de mezclilla",
+            "a pair of light blue cropped wide-leg denim capri pants ending below the "
+            "knee with turned-up cuffs", note=_CARPET),
+    Garment("halter_cream", "halter_cream.webp", Category.TOP, "halter crema",
+            "a cream sleeveless halter-neck crop top with a zigzag textured knit",
+            note=_CARPET),
+    Garment("cardigan_pink", "cardigan_pink.webp", Category.OUTERWEAR, "cardigan rosa",
+            "a pale pink knit cardigan with yellow scalloped ruffle trim down the front "
+            "and on the short sleeves", note=_ANGLED),
+    Garment("top_edhardy", "top_edhardy.webp", Category.TOP, "playera Ed Hardy",
+            "a navy long-sleeved fitted top with a large purple rose and dagger tattoo "
+            "print across the front", note=_ANGLED),
+    Garment("tank_blue", "tank_blue.webp", Category.TOP, "top azul cielo",
+            "a light blue ribbed spaghetti-strap tank top", note=_CARPET),
+    Garment("sweater_navy", "sweater_navy.webp", Category.TOP, "suéter azul marino",
+            "a plain navy blue long-sleeved knit sweater", note=_ANGLED),
+    Garment("skirt_brown_paisley", "skirt_brown_paisley.webp", Category.BOTTOM,
+            "falda café paisley",
+            "a dark brown midi skirt with a tonal paisley burnout print and an "
+            "asymmetric hem", note=_CARPET),
 ]
 
 
@@ -91,6 +146,8 @@ def print_prompts() -> None:
         print(_PROMPT.format(
             description=garment.described, coverage=_COVERAGE[garment.category]
         ))
+        if garment.note:
+            print(garment.note)
         print("-" * 78)
         print(f"PASO 2 - sobre la imagen del paso 1, guardar en: "
               f"assets/mattes/{garment.name}_inverted.jpeg")
@@ -101,7 +158,7 @@ def print_prompts() -> None:
 
 async def ingest() -> None:
     settings = get_settings()
-    storage = LocalStorage(settings.media_dir)
+    storage = build_storage(settings)
     profile = profile_of(settings.base_avatar)
 
     ready: list[tuple[Garment, Image.Image, Image.Image]] = []

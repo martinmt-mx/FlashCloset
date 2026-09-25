@@ -60,8 +60,14 @@ app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
 
 
 @app.get("/api/health")
-async def health() -> dict[str, str]:
-    return {"status": "ok", "image_backend": settings.dresser_backend}
+async def health() -> dict[str, str | bool]:
+    # The frontend reads `registration` to decide whether to offer the sign-up
+    # toggle at all; a closed instance should not show a link that only 403s.
+    return {
+        "status": "ok",
+        "image_backend": settings.dresser_backend,
+        "registration": settings.allow_registration,
+    }
 
 
 # Serving the built frontend from the API keeps everything on one origin, which means

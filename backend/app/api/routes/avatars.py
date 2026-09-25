@@ -21,7 +21,7 @@ from app.services.avatar_prep import cut_out_backdrop
 from app.services.dressers import build_dresser
 from app.services.garment_layer import profile_avatar
 from app.services.pipeline import profile_of
-from app.services.storage import LocalStorage
+from app.services.storage import build_storage
 
 router = APIRouter(prefix="/avatars", tags=["avatar"])
 
@@ -79,7 +79,7 @@ async def create_avatar(
     buffer = BytesIO()
     cut.save(buffer, format="PNG")
 
-    storage = LocalStorage(settings.media_dir)
+    storage = build_storage(settings)
     profile = profile_avatar(build.image)
 
     if make_default:
@@ -123,7 +123,7 @@ async def ensure_default_avatar(session: AsyncSession, user: User) -> Avatar:
 
     settings = get_settings()
     source = settings.base_avatar
-    storage = LocalStorage(settings.media_dir)
+    storage = build_storage(settings)
     profile = profile_of(source)
 
     avatar = Avatar(

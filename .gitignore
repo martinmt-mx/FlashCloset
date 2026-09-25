@@ -27,13 +27,22 @@ Thumbs.db
 # Personal reference photos — never committed
 assets/private/
 
+# Pipeline working material: photos of real clothes, the renders made from them and
+# their mattes. None of it is needed to run the app — the Dockerfile copies only
+# assets/avatar/ — and it is nobody's business but ours.
+assets/dressed/
+assets/garments/
+assets/isolated/
+assets/mattes/
+
 # Local data and session files — contain user accounts, uploads and tokens
 *.db
-*.db.bak
+*.db.*
 *.db-journal
 .token
 .last_item
 media/
+media_sin_comprimir/
 
 # Pipeline / research scratch output (large, regenerable)
 output/
