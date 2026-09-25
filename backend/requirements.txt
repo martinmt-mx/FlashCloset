@@ -1,10 +1,15 @@
 fastapi>=0.141
 uvicorn>=0.53
 python-multipart>=0.0.32
-sqlalchemy>=2.0
+# The [asyncio] extra pulls in greenlet, which SQLAlchemy's async engine needs at
+# import time. It was present locally by accident, so a clean container was the
+# first place its absence showed.
+sqlalchemy[asyncio]>=2.0
 aiosqlite>=0.22
 alembic>=1.20
-pydantic>=2.13
+# The [email] extra pulls in email-validator, which EmailStr needs to build its
+# schema; without it the auth models fail at import, not at request time.
+pydantic[email]>=2.13
 pydantic-settings>=2.15
 PyJWT>=2.14
 bcrypt>=5.0
