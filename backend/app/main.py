@@ -24,6 +24,9 @@ class SpaFiles(StaticFiles):
                 raise
             return FileResponse(Path(self.directory) / "index.html")
 
+from sqlalchemy import text
+from sqlalchemy.engine import make_url
+
 from app.api.routes import auth, avatars, items, outfits
 from app.config import get_settings
 from app.db.base import Base
@@ -63,11 +66,27 @@ app.mount("/media", StaticFiles(directory=settings.media_dir), name="media")
 async def health() -> dict[str, str | bool]:
     # The frontend reads `registration` to decide whether to offer the sign-up
     # toggle at all; a closed instance should not show a link that only 403s.
-    return {
+    #
+    # `database` names which server this instance actually reached and whether it
+    # holds any accounts. A deploy pointed at the wrong database answers every
+    # login with 401, exactly as a wrong password does, and there is otherwise no
+    # way to tell the two apart from outside. Host and user only, never the
+    # password, and no counts.
+    report: dict[str, str | bool] = {
         "status": "ok",
         "image_backend": settings.dresser_backend,
         "registration": settings.allow_registration,
     }
+    try:
+        url = make_url(settings.database_url)
+        report["database"] = f"{url.username}@{url.host}/{url.database}"
+        async with engine.connect() as connection:
+            seeded = await connection.scalar(text("select exists (select 1 from users)"))
+        report["has_accounts"] = bool(seeded)
+    except Exception as exc:  # noqa: BLE001 - the point is to report, not to raise
+        report["database"] = f"unreachable: {type(exc).__name__}"
+        report["status"] = "degraded"
+    return report
 
 
 # Serving the built frontend from the API keeps everything on one origin, which means
