@@ -3,19 +3,21 @@
 
 import { useRef, useState } from "react";
 import { api, type Post } from "../api";
-import { moodFace } from "./Wall";
-
-const MOODS = [
-  "feliz", "contenta", "enamorada", "emocionada",
-  "tranquila", "cansada", "harta", "triste",
-  "con frío", "con hambre", "bonita", "lista",
-];
+import {
+  GENDERS,
+  type Gender,
+  moodFace,
+  moodsFor,
+  rememberGender,
+  rememberedGender,
+} from "../moods";
 
 const MAX = 500;
 
 export function Composer({ onPosted }: { onPosted: (post: Post) => void }) {
   const [body, setBody] = useState("");
   const [feeling, setFeeling] = useState<string | null>(null);
+  const [gender, setGender] = useState<Gender>(rememberedGender);
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -49,6 +51,16 @@ export function Composer({ onPosted }: { onPosted: (post: Post) => void }) {
     }
   }
 
+  /** Switching endings rewrites the words, so a mood already chosen follows along
+   *  to its new spelling instead of being silently dropped. */
+  function switchGender(next: Gender) {
+    const was = moodsFor(gender).indexOf(feeling ?? "");
+    setGender(next);
+    rememberGender(next);
+    if (was >= 0) setFeeling(moodsFor(next)[was]);
+  }
+
+  const moods = moodsFor(gender);
   const empty = !body.trim() && !photo;
 
   return (
@@ -66,8 +78,23 @@ export function Composer({ onPosted }: { onPosted: (post: Post) => void }) {
           onChange={(e) => setBody(e.target.value)}
         />
 
+        <div className="compose__genders">
+          <span className="compose__label">Terminaciones:</span>
+          {GENDERS.map((g) => (
+            <button
+              key={g.id}
+              type="button"
+              className="compose__mood compose__mood--gender"
+              aria-pressed={gender === g.id}
+              onClick={() => switchGender(g.id)}
+            >
+              {g.label}
+            </button>
+          ))}
+        </div>
+
         <div className="compose__moods">
-          {MOODS.map((mood) => (
+          {moods.map((mood) => (
             <button
               key={mood}
               type="button"

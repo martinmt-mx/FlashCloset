@@ -6,18 +6,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { api, getToken, type Post } from "../api";
+import { moodFace } from "../moods";
 import { Composer } from "./Composer";
-
-const MOOD_FACE: Record<string, string> = {
-  feliz: "😄", contenta: "🙂", enamorada: "😍", emocionada: "🤩",
-  tranquila: "😌", cansada: "🥱", harta: "😤", triste: "😢",
-  "con frío": "🥶", "con hambre": "🤤", bonita: "💅", lista: "😎",
-};
-
-export function moodFace(feeling: string | null): string {
-  if (!feeling) return "💬";
-  return MOOD_FACE[feeling.trim().toLowerCase()] ?? "✨";
-}
 
 /** Wall clocks read in glances, so anything older than a week is just the date. */
 function when(iso: string): string {
