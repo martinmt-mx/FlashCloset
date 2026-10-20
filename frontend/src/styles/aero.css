@@ -1,0 +1,281 @@
+/* The wall: TheSlap's panel layout rendered in Frutiger Aero.
+   From TheSlap: rounded panels, each wearing a coloured tab on its top-left
+   corner, tiled over a dark patterned field.
+   From Frutiger Aero: water and sky instead of flat navy, glass instead of
+   cardboard, and a specular highlight across the top of every surface. */
+
+/* The closet is a fixed-height stage, so the base styles lock scrolling and paint
+   a floor strip over everything. The wall is a document: it scrolls, and that
+   purple floor does not belong to it. App marks the body with the current view. */
+body[data-view="wall"] { overflow: auto; overflow-x: hidden; }
+body[data-view="wall"]::after { display: none; }
+
+.aero {
+  --sky-1: #d6f3ff;
+  --sky-2: #8fd8f5;
+  --sea-1: #2aa3d4;
+  --sea-2: #1667a8;
+  --deep: #0b3b63;
+  --leaf-1: #b6ef73;
+  --leaf-2: #52b53a;
+  --sun-1: #ffe89a;
+  --sun-2: #ffb028;
+  --bubble: rgba(255, 255, 255, 0.55);
+  --glass: rgba(255, 255, 255, 0.82);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --aero-ink: #0e3550;
+
+  min-height: 100vh;
+  min-height: 100dvh;
+  color: var(--aero-ink);
+  font-family: "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  position: relative;
+  overflow-x: hidden;
+  background: var(--sea-2);
+}
+/* Fixed so a short wall still shows sky at the top and deep water at the bottom,
+   instead of the gradient collapsing into the height of two posts. */
+.aero::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(130% 90% at 50% -12%,
+    var(--sky-1) 0%, var(--sky-2) 34%, var(--sea-1) 66%, var(--sea-2) 100%);
+}
+
+/* Bubbles. Pure decoration, so they never take a click. */
+.aero__bubbles {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.aero__bubble {
+  position: absolute;
+  bottom: -140px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95), rgba(255,255,255,0.22) 42%, rgba(255,255,255,0.06) 62%),
+    rgba(255, 255, 255, 0.08);
+  box-shadow: inset 0 0 14px rgba(255,255,255,0.55), 0 0 10px rgba(255,255,255,0.25);
+  animation: aero-rise linear infinite;
+}
+@keyframes aero-rise {
+  from { transform: translateY(0) translateX(0); opacity: 0; }
+  12%  { opacity: 0.85; }
+  88%  { opacity: 0.6; }
+  to   { transform: translateY(-118vh) translateX(var(--drift, 20px)); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aero__bubble { animation: none; opacity: 0.35; }
+}
+
+.aero__inner {
+  position: relative;
+  z-index: 1;
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 18px 16px 64px;
+}
+
+/* --- Header ------------------------------------------------------------- */
+
+.aero__bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.aero__logo {
+  font-family: "Baloo 2", "Trebuchet MS", sans-serif;
+  font-size: clamp(26px, 5vw, 38px);
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: #fff;
+  text-shadow: 0 2px 0 rgba(10, 60, 100, 0.55), 0 6px 18px rgba(4, 36, 66, 0.5);
+  margin: 0;
+  flex: 1 1 auto;
+}
+.aero__logo span { color: var(--sun-1); }
+
+/* --- Glass button ------------------------------------------------------- */
+
+.gel {
+  position: relative;
+  border: none;
+  cursor: pointer;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  font-size: 15px;
+  color: #08364f;
+  background: linear-gradient(180deg, #ffffff 0%, #e4f6ff 48%, #b9e6fb 52%, #d8f2ff 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    inset 0 -2px 6px rgba(12, 86, 130, 0.22),
+    0 3px 0 rgba(10, 64, 100, 0.35),
+    0 8px 18px rgba(6, 42, 70, 0.35);
+  transition: transform 0.08s ease, box-shadow 0.12s ease, filter 0.12s ease;
+  overflow: hidden;
+}
+/* The slick across the upper half is what makes it read as moulded plastic. */
+.gel::before {
+  content: "";
+  position: absolute;
+  left: 6%; right: 6%; top: 3px;
+  height: 42%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(255,255,255,0.1));
+  pointer-events: none;
+}
+.gel:hover { filter: brightness(1.05); }
+.gel:active { transform: translateY(3px); box-shadow: inset 0 2px 6px rgba(10,70,110,0.3); }
+.gel:disabled { opacity: 0.55; cursor: default; transform: none; }
+
+.gel--leaf { color: #15400c; background: linear-gradient(180deg, #f0ffdc 0%, #cdf3a0 48%, #8ed75c 52%, #b6ef86 100%); }
+.gel--sun  { color: #4a2d00; background: linear-gradient(180deg, #fff6d9 0%, #ffe49a 48%, #ffc24d 52%, #ffdc8a 100%); }
+.gel--sm   { padding: 7px 14px; font-size: 13px; }
+
+/* --- Panel with a corner tab -------------------------------------------- */
+
+.panel {
+  position: relative;
+  margin: 26px 0 18px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, var(--glass-edge) 0%, var(--glass) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.95),
+    0 2px 0 rgba(255,255,255,0.35),
+    0 14px 30px rgba(5, 40, 70, 0.35);
+  backdrop-filter: blur(8px);
+}
+.panel__tab {
+  position: absolute;
+  top: -15px;
+  left: 16px;
+  padding: 5px 16px 6px;
+  border-radius: 999px;
+  font-family: "Baloo 2", "Trebuchet MS", sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #06324b;
+  background: linear-gradient(180deg, #ffffff, #bfe9fb 55%, #7fd0f0);
+  box-shadow: inset 0 1px 0 #fff, 0 3px 0 rgba(8, 60, 95, 0.3), 0 8px 14px rgba(5, 40, 70, 0.3);
+  white-space: nowrap;
+}
+.panel__tab--leaf { background: linear-gradient(180deg, #ffffff, #d2f5a8 55%, #8ed75c); color: #1d4a10; }
+.panel__tab--sun  { background: linear-gradient(180deg, #ffffff, #ffe9a8 55%, #ffc24d); color: #5a3800; }
+.panel__body { padding: 26px 18px 18px; }
+
+/* --- A status ------------------------------------------------------------ */
+
+.status { display: flex; gap: 14px; align-items: flex-start; }
+.status__face {
+  flex: 0 0 auto;
+  width: 62px; height: 62px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: linear-gradient(180deg, #eaf8ff, #bfe6f7);
+  box-shadow: inset 0 1px 0 #fff, 0 3px 0 rgba(8,60,95,0.25), 0 6px 14px rgba(5,40,70,0.3);
+}
+.status__main { min-width: 0; flex: 1 1 auto; }
+.status__who {
+  font-family: "Baloo 2", "Trebuchet MS", sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  color: #0a4a72;
+  margin: 0 0 2px;
+}
+.status__when { font-size: 12px; opacity: 0.65; margin-bottom: 8px; }
+.status__body {
+  margin: 0 0 10px;
+  font-size: 16.5px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.status__photo {
+  display: block;
+  width: 100%;
+  max-height: 460px;
+  object-fit: contain;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.6);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.8), 0 4px 12px rgba(5,40,70,0.25);
+  margin-bottom: 10px;
+}
+/* TheSlap's "Mood:" line, which is the detail that makes the whole thing read. */
+.status__mood {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 14px;
+  color: #0b4a63;
+  background: linear-gradient(180deg, #ffffff, #d8f3ff 55%, #a9e2f7);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 0 rgba(8,60,95,0.22);
+}
+.status__mood b { font-weight: 800; }
+.status__drop { margin-left: auto; }
+
+.aero__empty { text-align: center; padding: 26px 10px; font-size: 16px; opacity: 0.8; }
+.aero__note { font-size: 13px; opacity: 0.75; margin-top: 4px; }
+.aero__error {
+  margin: 0 0 10px;
+  padding: 9px 13px;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #6d1026;
+  background: rgba(255, 216, 224, 0.9);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
+}
+
+/* --- Composer ------------------------------------------------------------ */
+
+.compose__field {
+  width: 100%;
+  box-sizing: border-box;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 16px;
+  color: #0e3550;
+  background: rgba(255,255,255,0.95);
+  box-shadow: inset 0 2px 5px rgba(10, 70, 110, 0.18), inset 0 0 0 1px rgba(255,255,255,0.8);
+  resize: vertical;
+}
+.compose__field:focus { outline: 3px solid rgba(123, 212, 247, 0.85); outline-offset: 1px; }
+.compose__row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
+.compose__count { font-size: 13px; opacity: 0.7; margin-left: auto; }
+.compose__moods { display: flex; gap: 7px; flex-wrap: wrap; margin-top: 10px; }
+.compose__mood {
+  border: none; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700;
+  padding: 6px 12px; border-radius: 999px; color: #0b4a63;
+  background: rgba(255,255,255,0.72);
+  box-shadow: inset 0 1px 0 #fff, 0 2px 0 rgba(8,60,95,0.18);
+}
+.compose__mood[aria-pressed="true"] {
+  background: linear-gradient(180deg, #ffffff, #ffe49a 55%, #ffc24d);
+  color: #4a2d00;
+}
+.compose__preview {
+  margin-top: 10px; display: block; max-height: 220px; border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(5,40,70,0.3);
+}
+
+@media (max-width: 620px) {
+  .aero__inner { padding: 14px 12px 56px; }
+  .status__face { width: 50px; height: 50px; }
+  .panel__body { padding: 24px 13px 14px; }
+}

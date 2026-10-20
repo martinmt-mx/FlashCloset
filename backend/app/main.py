@@ -27,7 +27,7 @@ class SpaFiles(StaticFiles):
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 
-from app.api.routes import auth, avatars, items, outfits
+from app.api.routes import auth, avatars, items, outfits, posts
 from app.config import get_settings
 from app.db.base import Base
 from app.db.session import engine
@@ -55,7 +55,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for router in (auth.router, avatars.router, items.router, outfits.router):
+for router in (auth.router, avatars.router, items.router, outfits.router, posts.router):
     app.include_router(router, prefix="/api")
 
 settings.media_dir.mkdir(parents=True, exist_ok=True)

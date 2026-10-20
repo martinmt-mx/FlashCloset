@@ -69,6 +69,7 @@ class User(Base):
     avatars: Mapped[list["Avatar"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     items: Mapped[list["ClothingItem"]] = relationship(back_populates="user", cascade="all, delete-orphan")
     outfits: Mapped[list["Outfit"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    posts: Mapped[list["Post"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Avatar(Base):
@@ -172,3 +173,26 @@ class OutfitItem(Base):
 
     outfit: Mapped[Outfit] = relationship(back_populates="items")
     item: Mapped[ClothingItem] = relationship()
+
+
+class Post(Base):
+    """One status update on the public wall.
+
+    Reading needs no account: the wall is the front page and anyone with the link
+    sees it. Writing is limited to the two people who have one, and nothing here
+    records reactions, because there is nothing to react with.
+    """
+
+    __tablename__ = "posts"
+
+    id: Mapped[uuid.UUID] = uuid_pk()
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    body: Mapped[str] = mapped_column(Text, default="")
+    # TheSlap called it a mood; it is a free word plus the emoji shown beside it.
+    feeling: Mapped[str | None] = mapped_column(String(40))
+    image_url: Mapped[str | None] = mapped_column(Text)
+    created_at: Mapped[datetime] = created_at()
+
+    user: Mapped[User] = relationship(back_populates="posts")

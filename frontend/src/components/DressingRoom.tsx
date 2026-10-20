@@ -18,7 +18,8 @@ const SLOT: Record<Category, string> = {
   shoes: "feet", outerwear: "outer", accessory: "extra",
 };
 
-export function DressingRoom({ onSignOut }: { onSignOut: () => void }) {
+export function DressingRoom({ onSignOut, onWall }:
+  { onSignOut: () => void; onWall?: () => void }) {
   const [avatar, setAvatar] = useState<Avatar | null>(null);
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [worn, setWorn] = useState<Record<string, ClothingItem>>({});
@@ -198,6 +199,7 @@ export function DressingRoom({ onSignOut }: { onSignOut: () => void }) {
           >
             {muted ? "Sonido off" : "Sonido on"}
           </button>
+          {onWall && <button className="pill pill--cyan" onClick={onWall}>Al muro</button>}
           <button className="pill" onClick={() => { clearToken(); onSignOut(); }}>Salir</button>
         </div>
       </header>

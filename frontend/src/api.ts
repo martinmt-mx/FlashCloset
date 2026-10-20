@@ -24,6 +24,15 @@ export interface ClothingItem {
   created_at: string;
 }
 
+export interface Post {
+  id: string;
+  author: string;
+  body: string;
+  feeling: string | null;
+  image_url: string | null;
+  created_at: string;
+}
+
 export interface Avatar {
   id: string;
   name: string;
@@ -112,6 +121,19 @@ export const api = {
     }),
 
   me: () => request<{ id: string; email: string; display_name: string | null }>("/auth/me"),
+
+  // The wall is the front page, so this one is read without a token.
+  posts: () => request<Post[]>("/posts"),
+
+  createPost: (body: string, feeling: string | null, photo: File | null) => {
+    const form = new FormData();
+    form.append("body", body);
+    if (feeling) form.append("feeling", feeling);
+    if (photo) form.append("photo", photo);
+    return request<Post>("/posts", { method: "POST", body: form });
+  },
+
+  deletePost: (id: string) => request<void>(`/posts/${id}`, { method: "DELETE" }),
 
   avatars: () => request<Avatar[]>("/avatars"),
 

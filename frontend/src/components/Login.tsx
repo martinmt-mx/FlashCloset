@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { api, setToken } from "../api";
 
-export function Login({ onDone }: { onDone: () => void }) {
+export function Login({ onDone, onBack }: { onDone: () => void; onBack?: () => void }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -52,6 +52,12 @@ export function Login({ onDone }: { onDone: () => void }) {
         <button className="pill" disabled={busy}>
           {busy ? "…" : mode === "login" ? "Entrar" : "Crear cuenta"}
         </button>
+        {onBack && (
+          <button type="button" className="login__switch" onClick={onBack}>
+            Volver al muro
+          </button>
+        )}
+
         {canRegister && (
           <button
             type="button" className="login__switch"

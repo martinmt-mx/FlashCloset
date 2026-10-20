@@ -110,3 +110,16 @@ class OutfitOut(BaseModel):
     is_favorite: bool
     created_at: datetime
     items: list[OutfitItemOut]
+
+
+class PostOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: uuid.UUID
+    # Flattened from the author so the wall needs no second request and exposes
+    # no account details beyond the name its owner chose to show.
+    author: str
+    body: str
+    feeling: str | None
+    image_url: str | None
+    created_at: datetime
