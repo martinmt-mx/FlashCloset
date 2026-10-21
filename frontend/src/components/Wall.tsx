@@ -75,7 +75,7 @@ function Status({ post, onDelete }: { post: Post; onDelete?: () => void }) {
               {post.feeling && (
                 <span className="status__mood">
                   <span aria-hidden="true">{moodFace(post.feeling)}</span>
-                  Humor: <b>{post.feeling}</b>
+                  Estado: <b>{post.feeling}</b>
                 </span>
               )}
               {onDelete && (
